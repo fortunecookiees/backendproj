@@ -2,6 +2,22 @@ const usersRepository = require('./users-repository');
 const { hashPassword } = require('../../../utils/password');
 
 /**
+ * Check if a user with the given email already exists
+ * @param {string} email - Email
+ * @returns {boolean}
+ */
+async function isUserExists(email) {
+  const user = await usersRepository.getUserByEmail(email);
+
+  // User not found
+  if (!user) {
+    return false;
+  }
+
+  return true;
+}
+
+/**
  * Get list of users
  * @returns {Array}
  */
@@ -49,6 +65,11 @@ async function getUser(id) {
  * @returns {boolean}
  */
 async function createUser(name, email, password) {
+  // Check if the user already exists
+  if (await isUserExists(email)) {
+    return null;
+  }
+
   // Hash password
   const hashedPassword = await hashPassword(password);
 
@@ -73,6 +94,11 @@ async function updateUser(id, name, email) {
 
   // User not found
   if (!user) {
+    return null;
+  }
+
+  // Check if the user already exists
+  if (email!== user.email && await isUserExists(email)) {
     return null;
   }
 
@@ -108,6 +134,7 @@ async function deleteUser(id) {
 }
 
 module.exports = {
+  isUserExists,
   getUsers,
   getUser,
   createUser,

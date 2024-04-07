@@ -51,6 +51,15 @@ async function createUser(request, response, next) {
     const email = request.body.email;
     const password = request.body.password;
 
+    //Check if email already exists
+    const emailExists = await usersService.emailExists(email);
+    if (emailExists) {
+      throw errorResponder(
+        errorTypes.UNPROCESSABLE_ENTITY,
+        'Email already exists'
+      );
+    }
+
     const success = await usersService.createUser(name, email, password);
     if (!success) {
       throw errorResponder(
@@ -122,5 +131,5 @@ module.exports = {
   getUser,
   createUser,
   updateUser,
-  deleteUser,
+  deleteUser,
 };

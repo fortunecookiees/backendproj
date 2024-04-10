@@ -50,17 +50,35 @@ async function createUser(request, response, next) {
     const name = request.body.name;
     const email = request.body.email;
     const password = request.body.password;
+    const password_confirm = request.body.password_confirm; // Buat confirm password
+    const checkEmail = await usersService.getCheckEmail(email); // Buat check email
+    const checkPassword = await usersService.getCheckPassword(password);
 
-    //Check if email already exists
-    const emailExists = await usersService.emailExists(email);
-    if (emailExists) {
+    // checkEmail
+    if (!checkEmail) {
       throw errorResponder(
-        errorTypes.UNPROCESSABLE_ENTITY,
-        'Email already exists'
+        errorTypes.EMAIL_ALREADY_TAKEN,
+        'Email already existed'
       );
     }
 
-    const success = await usersService.createUser(name, email, password);
+    // checkPassword
+    if (!checkPassword) {
+      throw errorResponder(errorTypes.INVALID_PASSWORD, 'Invalid Password');
+    }
+
+    if (password_confirm != password) {
+      throw errorResponder(errorTypes.INVALID_PASSWORD, 'Invalid Password');
+    }
+
+    //
+
+    const success = await usersService.createUser(
+      name,
+      email,
+      password,
+      password_confirm
+    );
     if (!success) {
       throw errorResponder(
         errorTypes.UNPROCESSABLE_ENTITY,
@@ -86,6 +104,15 @@ async function updateUser(request, response, next) {
     const id = request.params.id;
     const name = request.body.name;
     const email = request.body.email;
+    const checkEmail = await usersService.getCheckEmail(email);
+
+    // checkEmail
+    if (!checkEmail) {
+      throw errorResponder(
+        errorTypes.EMAIL_ALREADY_TAKEN,
+        'Email already existed'
+      );
+    }
 
     const success = await usersService.updateUser(id, name, email);
     if (!success) {
@@ -126,10 +153,30 @@ async function deleteUser(request, response, next) {
   }
 }
 
+async function changePassword(request, response, next) {
+  try {
+    const id = request.params.id;
+    const password_old = request.body.password_old;
+    const password_new = request.body.password_new;
+    const password_confirm = request.body.password_confirm;
+    const getChangePassword = await usersService.getChangePassword(
+      id,
+      password_old,
+      password_new,
+      password_confirm
+    );
+
+    return response.status(200).json({ message: 'Login Succesful' });
+  } catch (error) {
+    return next(error);
+  }
+}
+
 module.exports = {
   getUsers,
   getUser,
   createUser,
+  changePassword,
   updateUser,
-  deleteUser,
+  deleteUser,
 };

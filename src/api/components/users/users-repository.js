@@ -33,6 +33,15 @@ async function createUser(name, email, password) {
 }
 
 /**
+ * Get user detail (email)
+ * @param {string} email - User email
+ * @returns {Promise}
+ */
+async function getEmail(email) {
+  return User.findOne({ email: email });
+}
+
+/**
  * Update existing user
  * @param {string} id - User ID
  * @param {string} name - Name
@@ -63,20 +72,26 @@ async function deleteUser(id) {
 }
 
 /**
- * Check if user with the given email already exist
- * @param {string} email - User email
- * @returns {Promise<boolean>}
+ * Get user detail (password)
+ * @param {string} password - User password
+ * @returns {Promise}
  */
-async function emailExists(email) {
-  const User = await User.findOne({ email });
-  return User != null;
+async function getPassword(password) {
+  return User.find({ password: password });
+}
+
+// NewPassword
+async function getPasswordNew(id, password_new) {
+  return User.findByIdAndUpdate(id, { password: password_new });
 }
 
 module.exports = {
   getUsers,
   getUser,
+  getEmail,
+  getPassword,
+  getPasswordNew,
   createUser,
   updateUser,
   deleteUser,
-  emailExists,
 };

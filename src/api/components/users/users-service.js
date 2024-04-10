@@ -1,21 +1,6 @@
 const usersRepository = require('./users-repository');
 const { hashPassword } = require('../../../utils/password');
-
-/**
- * Check if a user with the given email already exists
- * @param {string} email - Email
- * @returns {boolean}
- */
-async function isUserExists(email) {
-  const user = await usersRepository.getUserByEmail(email);
-
-  // User not found
-  if (!user) {
-    return false;
-  }
-
-  return true;
-}
+const { passwordMatched } = require('../../../utils/password');
 
 /**
  * Get list of users
@@ -65,11 +50,6 @@ async function getUser(id) {
  * @returns {boolean}
  */
 async function createUser(name, email, password) {
-  // Check if the user already exists
-  if (await isUserExists(email)) {
-    return null;
-  }
-
   // Hash password
   const hashedPassword = await hashPassword(password);
 
@@ -94,11 +74,6 @@ async function updateUser(id, name, email) {
 
   // User not found
   if (!user) {
-    return null;
-  }
-
-  // Check if the user already exists
-  if (email!== user.email && await isUserExists(email)) {
     return null;
   }
 
@@ -133,10 +108,68 @@ async function deleteUser(id) {
   return true;
 }
 
+/**
+ * Get user email
+ * @param {string} email - User email
+ * @returns {Object}
+ */
+async function getCheckEmail(email) {
+  const checkEmail = await usersRepository.getEmail(email);
+
+  // Email
+  if (!checkEmail) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+/**
+ * Get user password
+ * @param {string} password - User password
+ * @returns {Object}
+ */
+async function getCheckPassword(password) {
+  const checkPassword = await usersRepository.getPassword(password);
+
+  // Password
+  if (checkPassword) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+// PasswordNew
+async function getChangePassword(
+  id,
+  password_old,
+  password_new,
+  password_confirm
+) {
+  //
+  if (password_confirm != password_new) {
+    throw new Error('Invalid New Password');
+  }
+
+  // Compare
+  const getUserId = await usersRepository.getUser(id);
+  const comparePass = await passwordMatched(password_old, getUserId.password);
+
+  if (!comparePass) {
+    throw new Error('Wrong Password');
+  }
+
+  const hashedPassword = await hashPassword(password_new);
+  await usersRepository.getPasswordNew(id, hashedPassword);
+}
+
 module.exports = {
-  isUserExists,
   getUsers,
   getUser,
+  getCheckEmail,
+  getCheckPassword,
+  getChangePassword,
   createUser,
   updateUser,
   deleteUser,
